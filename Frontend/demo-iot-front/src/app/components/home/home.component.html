@@ -1,0 +1,23 @@
+<div class="container">
+  <table>
+    <caption>Datos de Corriente y Potencia</caption>
+    <thead>
+    <tr>
+      <th>Nº</th>
+      <th>Corriente (A)</th>
+      <th>Potencia (W)</th>
+    </tr>
+    </thead>
+    <tbody id="table-body">
+    <tr *ngFor="let dato of datos; let i = index">
+      <td>{{ i + 1 }}</td>
+      <td>{{ dato.corriente | number:'1.2-2' }}</td>
+      <td>{{ dato.potencia | number:'1.2-2' }}</td>
+    </tr>
+    <tr *ngIf="datos.length === 0">
+      <td colspan="3">Esperando datos...</td>
+    </tr>
+    </tbody>
+  </table>
+  <button (click)="reiniciarDatos()">Reiniciar / Limpiar campos</button>
+</div>

@@ -1,0 +1,49 @@
+.container {
+  max-width: 800px; /* Ancho máximo para que no se desborde */
+  margin: 40px auto; /* Centrado horizontal */
+  background-color: #C9E4CA; /* Tono de celeste pastel */
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #8BC34A; /* Borde externo celeste pastel oscuro */
+  letter-spacing: 1px;
+  font-size: 1.2rem; /* Aumentado el tamaño de la fuente */
+}
+
+caption {
+  background-color: #C9E4CA; /* Tono de celeste pastel */
+  padding: 10px;
+  font-weight: bold;
+  caption-side: top;
+}
+
+thead {
+  background-color: #C9E4CA; /* Tono de celeste pastel */
+}
+
+th, td {
+  border: 1px solid #8BC34A; /* Borde interno celeste pastel oscuro */
+  padding: 15px 30px; /* Aumentado el padding para que se vea más grande */
+  text-align: center;
+}
+
+th {
+  background-color: #C9E4CA; /* Tono de celeste pastel */
+}
+
+tbody tr:nth-child(even) {
+  background-color: #F7F7F7;
+}
+
+tbody tr:nth-child(odd) {
+  background-color: #FFFFFF;
+}
+
+tfoot {
+  font-weight: bold;
+}
