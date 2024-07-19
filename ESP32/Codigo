@@ -1,0 +1,141 @@
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <Wire.h>
+#include <Adafruit_ADS1X15.h>
+
+Adafruit_ADS1115 ads; 
+
+const float FACTOR = 100; //CANTIDAD MAXIMA RECIBIDA POR SCT013
+const float multiplier = 0.0625F; // PARA HACER MÁS PRECISO EL CÁLCULO
+
+void ImprimirMedidas(String prefix, float value, String postfix);
+
+WiFiClient esp32Client;
+PubSubClient mqttClient(esp32Client);
+
+const char* ssid = "Mi Red";
+const char* password = "Mi pass";
+
+const char* server = "io.adafruit.com";
+int port = 1883;
+
+// Credenciales de Adafruit IO MQTT
+const char* mqtt_username = "username";
+const char* mqtt_password = "pass";
+
+void wifiInit(){
+  Serial.print("Conectandose a ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password);
+
+  while(WiFi.status() != WL_CONNECTED){
+    Serial.print(".");
+    delay(500);
+  }
+
+  Serial.print("");
+  Serial.println("Conectado a WiFi");
+  Serial.println("Direccion IP: ");
+  Serial.print(WiFi.localIP());
+
+}
+
+void callback(char* topic, byte* payload, unsigned int length){
+  Serial.print("Mensaje recibido [");
+  Serial.print(topic);
+  Serial.print("]");
+
+  String message;
+  for (int i = 0; i < length; i++) {
+    message += (char)payload[i];
+  }
+  Serial.println(message);
+}
+
+void reconnect(){
+  while(!mqttClient.connected()){
+    Serial.print("Intentando conectarse MQTT...");
+
+    if(mqttClient.connect("arduinoClient", mqtt_username, mqtt_password)){
+      Serial.println("Conectado");
+
+      mqttClient.subscribe("ljosuet/f/salida");
+    }else{
+      Serial.print("Fallo, rc = ");
+      Serial.print(mqttClient.state());
+      Serial.println("Intentar de nuevo en 5 segundos");
+      delay(5000);
+    }
+  }
+}
+
+void setup() {
+
+  Serial.begin(9600);
+  
+  wifiInit();     // Inicialización WiFi
+
+  mqttClient.setServer(server, port);
+  mqttClient.setCallback(callback);
+
+  ads.setGain(GAIN_TWO);        // ±2.048V  1 bit = 0.0625mV
+  ads.begin();
+  reconnect();
+}
+
+void loop() {
+
+  mqttClient.loop(); // Mantener conexión activa
+
+  if(!mqttClient.connected()){
+    reconnect();
+  }
+
+  float CorrienteRMS = getCorriente();
+  float Potencia = 110.0 * CorrienteRMS;
+ 
+ ImprimirMedidas("Irms: ", CorrienteRMS, "A ,");
+ ImprimirMedidas("Potencia: ", Potencia, "W");
+
+ String payload = String(CorrienteRMS) + "," + String(Potencia);
+ mqttClient.publish("ljosuet/f/salida", payload.c_str());
+
+ delay(1000);
+
+}
+
+void ImprimirMedidas(String prefix, float value, String postfix)
+{
+ Serial.print(prefix);
+ Serial.print(value, 3);
+ Serial.println(postfix);
+}
+ 
+
+float getCorriente()
+{
+ float Volt_diferencial;
+ float corriente;
+ float sum = 0;
+ long tiempo = millis();
+ int counter = 0;
+ 
+ while (millis() - tiempo < 1000)
+ {
+   Volt_diferencial = ads.readADC_Differential_0_1() * multiplier;
+   
+   //-----------------------------------------------------
+   //Volt_diferencial = ads.readADC_Differential_2_3() * multiplier;
+   //-----------------------------------------------------
+   
+   corriente = Volt_diferencial * FACTOR;
+   corriente /= 1000.0;
+ 
+   sum += sq(corriente);
+   counter = counter + 1;
+  }
+ 
+ corriente = sqrt(sum / counter);
+ return(corriente);
+}
